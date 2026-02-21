@@ -8,25 +8,21 @@ A fast, modern web tool that extracts clean, designer-friendly color palettes fr
 
 ## ✨ Features
 
-* 🎯 **Accurate color extraction** using median-cut (ColorThief)
-* 🧠 **Perceptual ranking** so important colors surface first
-* 🧹 **Near-duplicate removal** to avoid muddy palettes
-* ⚡ **Idle-time processing** for smooth performance
-* 🎛 **Adjustable palette size** (3–10 colors)
-* 🖱 **Drag & drop upload zone**
-* 📋 **Click to copy hex values** with visual feedback
-* 🌌 **Modern glass UI** with subtle motion and depth
-* ♻️ **Memory-safe object URL handling**
+- 🎯 **Accurate color extraction** using median-cut (ColorThief)
+- 🧠 **Perceptual ranking** so important colors surface first
+- 🧹 **Near-duplicate removal** to avoid muddy palettes
+- ⚡ **Idle-time processing** for smooth performance
+- 🎛 **Adjustable palette size** (3–10 colors)
+- 🖱 **Drag & drop upload zone**
+- 📋 **Click to copy hex values** with visual feedback
+- 🌌 **Modern glass UI** with subtle motion and depth
+- ♻️ **Memory-safe object URL handling**
 
 ---
 
 ## 🖼 Preview
 
-*Add your screenshot here*
-
-```
-/docs/preview.png
-```
+![Preview Image](/docs/preview.png)
 
 ---
 
@@ -34,16 +30,16 @@ A fast, modern web tool that extracts clean, designer-friendly color palettes fr
 
 **Frontend**
 
-* React (Vite)
-* Tailwind CSS
-* shadcn/ui
-* Lucide Icons
+- React (Vite)
+- Tailwind CSS
+- shadcn/ui
+- Lucide Icons
 
 **Color Engine**
 
-* ColorThief (median cut quantization)
-* Custom perceptual scoring
-* RGB distance deduplication
+- ColorThief (median cut quantization)
+- Custom perceptual scoring
+- RGB distance deduplication
 
 ---
 
@@ -88,15 +84,15 @@ Image → ColorThief → Oversample → Deduplicate → Perceptual Sort → Disp
 
 Most palette tools fail because they:
 
-* overcount dark backgrounds
-* return near-duplicate colors
-* sort purely by frequency
+- overcount dark backgrounds
+- return near-duplicate colors
+- sort purely by frequency
 
 This project fixes that by:
 
-* clustering similar colors
-* removing visually redundant tones
-* ranking by brightness + saturation
+- clustering similar colors
+- removing visually redundant tones
+- ranking by brightness + saturation
 
 Result: palettes that feel **human-correct**, not just mathematically correct.
 
@@ -106,10 +102,10 @@ Result: palettes that feel **human-correct**, not just mathematically correct.
 
 This tool optimizes for:
 
-* **Designer trust** over raw pixel math
-* **Visual clarity** over maximum color count
-* **Speed** without blocking the main thread
-* **Modern SaaS feel** instead of generic UI kits
+- **Designer trust** over raw pixel math
+- **Visual clarity** over maximum color count
+- **Speed** without blocking the main thread
+- **Modern SaaS feel** instead of generic UI kits
 
 If a palette looks technically correct but visually wrong — it’s wrong.
 
@@ -149,12 +145,12 @@ Object URLs are properly revoked to prevent leaks during heavy usage.
 
 ## 🗺 Roadmap
 
-* [ ] Copy-all colors
-* [ ] Export palette (CSS / JSON / ASE)
-* [ ] Lock colors
-* [ ] Shareable palette links
-* [ ] LAB color space upgrade
-* [ ] Palette naming AI
+- [ ] Copy-all colors
+- [ ] Export palette (CSS / JSON / ASE)
+- [ ] Lock colors
+- [ ] Shareable palette links
+- [ ] LAB color space upgrade
+- [ ] Palette naming AI
 
 ---
 
@@ -162,10 +158,10 @@ Object URLs are properly revoked to prevent leaks during heavy usage.
 
 PRs welcome. If you’re improving:
 
-* extraction accuracy
-* perceptual ranking
-* performance
-* or UX polish
+- extraction accuracy
+- perceptual ranking
+- performance
+- or UX polish
 
 …you’re working in the right places.
 
