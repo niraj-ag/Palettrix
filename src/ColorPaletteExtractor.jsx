@@ -1,3 +1,4 @@
+import logo from "@/assets/color-circle.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -215,7 +216,7 @@ export default function ColorPaletteExtractor() {
         {/* Logo + Brand */}
         <div className="flex flex-col items-center gap-2">
           <img
-            src="src\assets\color-circle.png"
+            src={logo}
             alt="Palettrix logo"
             className="h-14 w-14 md:h-16 md:w-16"
           />
