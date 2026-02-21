@@ -17,6 +17,9 @@ export default function ColorPaletteExtractor() {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(null);
 
+  const [basePalette, setBasePalette] = useState([]);
+  const lockedRef = useRef(new Set());
+
   const objectUrlRef = useRef(null);
   const dragCounter = useRef(0);
   const extractTimeout = useRef(null);
@@ -34,34 +37,42 @@ export default function ColorPaletteExtractor() {
 
   // ---------- EXTRACTION ----------
   const extractColors = useCallback((img, count) => {
-    setIsLoading(true);
+  setIsLoading(true);
 
-    const run = () => {
-      try {
-        const palette = colorThief.getPalette(img, count * 2);
+  const run = () => {
+    try {
+      // STEP 1 — always oversample to fixed size
+      const RAW_SIZE = 24;
 
-        let hexColors = palette.map(([r, g, b]) =>
-          rgbToHex(r, g, b)
-        );
+      const palette = colorThief.getPalette(img, RAW_SIZE);
 
-        hexColors = removeNearDuplicates(hexColors, 55);
-        hexColors = sortByPerceptualWeight(hexColors);
-        hexColors = hexColors.slice(0, count);
+      let hexColors = palette.map(([r, g, b]) =>
+        rgbToHex(r, g, b)
+      );
 
-        setColors(hexColors);
-      } catch (err) {
-        console.error("Extraction failed:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      hexColors = removeNearDuplicates(hexColors, 45);
+      hexColors = sortByPerceptualWeight(hexColors);
 
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(run);
-    } else {
-      setTimeout(run, 0);
+      // cache stable master palette
+      setBasePalette(hexColors);
+
+      // STEP 2 — derive visible palette from stable base
+      const visible = buildVisiblePalette(hexColors, count);
+
+      setColors(visible);
+    } catch (err) {
+      console.error("Extraction failed:", err);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(run);
+  } else {
+    setTimeout(run, 0);
+  }
+}, []);
 
   // ---------- FILE PROCESS ----------
   const processFile = useCallback(
@@ -176,7 +187,7 @@ export default function ColorPaletteExtractor() {
     const brightness = (r + g + b) / 3;
     const saturation = max === 0 ? 0 : (max - min) / max;
 
-    return brightness * 0.5 + saturation * 255 * 0.5;
+    return brightness * 0.45 + saturation * 255 * 0.55;
   };
 
   const sortByPerceptualWeight = (hexColors) =>
@@ -193,7 +204,57 @@ export default function ColorPaletteExtractor() {
       console.warn("Clipboard failed");
     }
   };
+  const buildVisiblePalette = (base, count) => {
+  const locked = Array.from(lockedRef.current);
 
+  const remaining = base.filter(c => !locked.includes(c));
+
+  return [...locked, ...remaining].slice(0, count);
+  };
+
+  const toggleLock = (color) => {
+  const set = lockedRef.current;
+
+  if (set.has(color)) set.delete(color);
+  else set.add(color);
+
+  setColors(prev => [...prev]);
+  };
+
+  const copyAll = async () => {
+  if (!colors.length) return;
+  await navigator.clipboard.writeText(colors.join(", "));
+};
+const exportPalette = () => {
+  const data = {
+    name: "Palettrix Palette",
+    colors,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "palettrix-palette.json";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const sharePalette = async () => {
+  if (!colors.length) return;
+
+  const encoded = encodeURIComponent(
+    btoa(JSON.stringify(colors))
+  );
+
+  const url = `${window.location.href.split("?")[0]}?palette=${encoded}`;
+
+  await navigator.clipboard.writeText(url);
+};
+  
   // ---------- CLEANUP ----------
   useEffect(() => {
     return () => {
@@ -202,6 +263,26 @@ export default function ColorPaletteExtractor() {
       }
     };
   }, []);
+
+  // ---------- URL hydration ---------
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get("palette");
+
+  if (!encoded) return;
+
+  try {
+    const decoded = JSON.parse(atob(decodeURIComponent(encoded)));
+
+    if (Array.isArray(decoded)) {
+      setColors(decoded);
+      setBasePalette(decoded); // important for stability
+    }
+  } catch (err) {
+    console.warn("Invalid palette in URL");
+  }
+}, []);
+
 
   // ---------- UI ----------
   return (
@@ -314,7 +395,21 @@ export default function ColorPaletteExtractor() {
           {/* RIGHT */}
           <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
             <CardHeader>
-              <CardTitle>Palette</CardTitle>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <CardTitle>Palette</CardTitle>
+
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={copyAll}>
+                    Copy All
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={exportPalette}>
+                    Export
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={sharePalette}>
+                    Share Link
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
 
             <CardContent>
@@ -331,12 +426,16 @@ export default function ColorPaletteExtractor() {
                     onClick={() => copyColor(color)}
                     className="rounded-xl p-4 cursor-pointer relative group transition-all duration-200 hover:scale-[1.04] hover:shadow-xl active:scale-[0.98]"
                     style={{ background: color }}
+                    onDoubleClick={() => toggleLock(color)}
                   >
                     <div className="absolute inset-0 rounded-xl ring-1 ring-black/10 group-hover:ring-white/40 transition" />
 
                     <div className="text-xs font-mono bg-black/50 backdrop-blur-sm px-2 py-1 rounded w-fit flex items-center gap-1">
                       {copied === color && <Check className="w-3 h-3" />}
                       {color}
+                      {lockedRef.current.has(color) && (
+                        <span className="text-[10px] ml-1 opacity-80">🔒</span>
+                      )}
                     </div>
                   </div>
                 ))}
