@@ -1,16 +1,186 @@
-# React + Vite
+# 🎨 Color Palette Extractor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fast, modern web tool that extracts clean, designer-friendly color palettes from any image. Built with React, Tailwind, and ColorThief for high visual accuracy and smooth UX.
 
-Currently, two official plugins are available:
+> Upload or drag an image and instantly generate a curated palette you can actually trust.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* 🎯 **Accurate color extraction** using median-cut (ColorThief)
+* 🧠 **Perceptual ranking** so important colors surface first
+* 🧹 **Near-duplicate removal** to avoid muddy palettes
+* ⚡ **Idle-time processing** for smooth performance
+* 🎛 **Adjustable palette size** (3–10 colors)
+* 🖱 **Drag & drop upload zone**
+* 📋 **Click to copy hex values** with visual feedback
+* 🌌 **Modern glass UI** with subtle motion and depth
+* ♻️ **Memory-safe object URL handling**
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🖼 Preview
+
+*Add your screenshot here*
+
+```
+/docs/preview.png
+```
+
+---
+
+## 🧱 Tech Stack
+
+**Frontend**
+
+* React (Vite)
+* Tailwind CSS
+* shadcn/ui
+* Lucide Icons
+
+**Color Engine**
+
+* ColorThief (median cut quantization)
+* Custom perceptual scoring
+* RGB distance deduplication
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/color-palette-extractor.git
+cd color-palette-extractor
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Run the dev server
+
+```bash
+npm run dev
+```
+
+Open:
+
+```
+http://localhost:5173
+```
+
+---
+
+## 🧠 How It Works
+
+Pipeline:
+
+```
+Image → ColorThief → Oversample → Deduplicate → Perceptual Sort → Display
+```
+
+### Why this matters
+
+Most palette tools fail because they:
+
+* overcount dark backgrounds
+* return near-duplicate colors
+* sort purely by frequency
+
+This project fixes that by:
+
+* clustering similar colors
+* removing visually redundant tones
+* ranking by brightness + saturation
+
+Result: palettes that feel **human-correct**, not just mathematically correct.
+
+---
+
+## 🎯 Design Philosophy
+
+This tool optimizes for:
+
+* **Designer trust** over raw pixel math
+* **Visual clarity** over maximum color count
+* **Speed** without blocking the main thread
+* **Modern SaaS feel** instead of generic UI kits
+
+If a palette looks technically correct but visually wrong — it’s wrong.
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+  components/
+    ui/            # shadcn components
+  ColorPaletteExtractor.jsx
+  App.jsx
+```
+
+---
+
+## ⚙️ Key Implementation Details
+
+### Idle extraction
+
+Uses `requestIdleCallback` when available to prevent UI jank.
+
+### Debounced slider
+
+Prevents excessive recomputation while adjusting palette size.
+
+### Anti-flicker drag handling
+
+Uses a drag counter to avoid dropzone flicker — a subtle but important UX polish.
+
+### Memory safety
+
+Object URLs are properly revoked to prevent leaks during heavy usage.
+
+---
+
+## 🗺 Roadmap
+
+* [ ] Copy-all colors
+* [ ] Export palette (CSS / JSON / ASE)
+* [ ] Lock colors
+* [ ] Shareable palette links
+* [ ] LAB color space upgrade
+* [ ] Palette naming AI
+
+---
+
+## 🤝 Contributing
+
+PRs welcome. If you’re improving:
+
+* extraction accuracy
+* perceptual ranking
+* performance
+* or UX polish
+
+…you’re working in the right places.
+
+---
+
+## 📜 License
+
+MIT — use it, ship it, improve it.
+
+---
+
+## 🧩 Final Note
+
+Color extraction is easy.
+
+**Trustworthy palettes are not.**
+
+This project focuses on the subtle post-processing that makes designers actually rely on the output instead of double-checking it elsewhere.
