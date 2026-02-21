@@ -16,6 +16,7 @@ export default function ColorPaletteExtractor() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(null);
+  const [colorFormat, setColorFormat] = useState("hex");
 
   const [basePalette, setBasePalette] = useState([]);
   const lockedRef = useRef(new Set());
@@ -53,12 +54,14 @@ export default function ColorPaletteExtractor() {
       hexColors = removeNearDuplicates(hexColors, 45);
       hexColors = sortByPerceptualWeight(hexColors);
 
-      // cache stable master palette
+      // ⭐ smart default only on first load
       setBasePalette(hexColors);
 
-      // STEP 2 — derive visible palette from stable base
-      const visible = buildVisiblePalette(hexColors, count);
+      setNumColors(prev =>
+        imageSrc ? prev : getSmartColorCount(hexColors)
+      );
 
+      const visible = buildVisiblePalette(hexColors, count);
       setColors(visible);
     } catch (err) {
       console.error("Extraction failed:", err);
@@ -197,7 +200,7 @@ export default function ColorPaletteExtractor() {
 
   const copyColor = async (color) => {
     try {
-      await navigator.clipboard.writeText(color);
+      await navigator.clipboard.writeText(formatColor(color));;
       setCopied(color);
       setTimeout(() => setCopied(null), 1200);
     } catch {
@@ -254,6 +257,27 @@ const sharePalette = async () => {
 
   await navigator.clipboard.writeText(url);
 };
+const getSmartColorCount = (palette) => {
+  // count distinct hues roughly
+  const unique = palette.length;
+
+  if (unique <= 6) return 5;
+  if (unique <= 12) return 6;
+  if (unique <= 18) return 7;
+  return 8;
+};
+const reExtract = () => {
+  if (!imageSrc) return;
+
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = imageSrc;
+  img.onload = () => extractColors(img, numColors);
+};
+
+const paletteGradient = colors.length
+  ? `linear-gradient(to right, ${colors.join(",")})`
+  : "none";
   
   // ---------- CLEANUP ----------
   useEffect(() => {
@@ -282,6 +306,53 @@ const sharePalette = async () => {
     console.warn("Invalid palette in URL");
   }
 }, []);
+  // ---------- Converters ---------
+  const formatColor = (hex) => {
+  if (colorFormat === "hex") return hex;
+
+  const { r, g, b } = hexToRgb(hex);
+
+  if (colorFormat === "rgb") {
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  if (colorFormat === "hsl") {
+    const rN = r / 255;
+    const gN = g / 255;
+    const bN = b / 255;
+
+    const max = Math.max(rN, gN, bN);
+    const min = Math.min(rN, gN, bN);
+    let h, s, l;
+
+    l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case rN:
+          h = (gN - bN) / d + (gN < bN ? 6 : 0);
+          break;
+        case gN:
+          h = (bN - rN) / d + 2;
+          break;
+        default:
+          h = (rN - gN) / d + 4;
+      }
+      h /= 6;
+    }
+
+    return `hsl(${Math.round(h * 360)}, ${Math.round(
+      s * 100
+    )}%, ${Math.round(l * 100)}%)`;
+  }
+
+  return hex;
+};
 
 
   // ---------- UI ----------
@@ -319,7 +390,7 @@ const sharePalette = async () => {
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* LEFT */}
-          <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
+          <Card className="h-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-[...]">
             <CardHeader>
               <CardTitle>Image</CardTitle>
             </CardHeader>
@@ -372,6 +443,30 @@ const sharePalette = async () => {
                   onValueChange={(v) => setNumColors(v[0])}
                 />
               </div>
+              <div className="space-y-3">
+              <p className="text-sm text-white/70">Color format</p>
+
+              <div className="flex gap-2">
+                {["hex", "rgb", "hsl"].map(fmt => (
+                  <Button
+                    key={fmt}
+                    size="sm"
+                    variant={colorFormat === fmt ? "default" : "secondary"}
+                    onClick={() => setColorFormat(fmt)}
+                    className="uppercase"
+                  >
+                    {fmt}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                onClick={reExtract}
+                className="w-full bg-gradient-to-r from-violet-600 to-purple-600"
+              >
+                Re-extract Colors
+              </Button>
+            </div>
 
               {/* PREVIEW */}
               {imageSrc && (
@@ -393,7 +488,7 @@ const sharePalette = async () => {
           </Card>
 
           {/* RIGHT */}
-          <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
+          <Card className="h-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-[...]">
             <CardHeader>
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <CardTitle>Palette</CardTitle>
@@ -412,34 +507,49 @@ const sharePalette = async () => {
               </div>
             </CardHeader>
 
-            <CardContent>
-              {!colors.length && (
-                <div className="text-center text-white/40 text-sm py-10">
-                  Palette will appear here
+            <CardContent className="flex flex-col h-full">
+              {/* BODY */}
+              <div className="flex-1">
+                {!colors.length ? (
+                  <div className="h-full flex items-center justify-center text-white/40 text-sm">
+                    Palette will appear here
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {colors.map((color, i) => (
+                      <div
+                        key={i}
+                        onClick={() => copyColor(color)}
+                        onDoubleClick={() => toggleLock(color)}
+                        className="rounded-xl p-4 cursor-pointer relative group transition-all duration-200 hover:scale-[1.04] hover:shadow-xl active:scale-[0.98]"
+                        style={{ background: color }}
+                      >
+                        <div className="absolute inset-0 rounded-xl ring-1 ring-black/10 group-hover:ring-white/40 transition" />
+
+                        <div className="text-xs font-mono bg-black/50 backdrop-blur-sm px-2 py-1 rounded w-fit flex items-center gap-1">
+                          {copied === color && <Check className="w-3 h-3" />}
+                          {formatColor(color)}
+                          {lockedRef.current.has(color) && (
+                            <span className="text-[10px] ml-1 opacity-80">🔒</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* GRADIENT BAR */}
+              {colors.length > 0 && (
+                <div className="mt-6">
+                  <div className="h-4 rounded-md border border-white/10 overflow-hidden">
+                    <div
+                      className="h-full w-full"
+                      style={{ background: paletteGradient }}
+                    />
+                  </div>
                 </div>
               )}
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {colors.map((color, i) => (
-                  <div
-                    key={i}
-                    onClick={() => copyColor(color)}
-                    className="rounded-xl p-4 cursor-pointer relative group transition-all duration-200 hover:scale-[1.04] hover:shadow-xl active:scale-[0.98]"
-                    style={{ background: color }}
-                    onDoubleClick={() => toggleLock(color)}
-                  >
-                    <div className="absolute inset-0 rounded-xl ring-1 ring-black/10 group-hover:ring-white/40 transition" />
-
-                    <div className="text-xs font-mono bg-black/50 backdrop-blur-sm px-2 py-1 rounded w-fit flex items-center gap-1">
-                      {copied === color && <Check className="w-3 h-3" />}
-                      {color}
-                      {lockedRef.current.has(color) && (
-                        <span className="text-[10px] ml-1 opacity-80">🔒</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         </div>
