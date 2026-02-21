@@ -398,7 +398,7 @@ const sharePalette = async () => {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <CardTitle>Palette</CardTitle>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 h-8 px-3">
                   <Button size="sm" variant="secondary" onClick={copyAll}>
                     Copy All
                   </Button>
