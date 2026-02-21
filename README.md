@@ -1,6 +1,8 @@
-# 🎨 Color Palette Extractor
+# 🎨 Palettrix
 
 A fast, modern web tool that extracts clean, designer-friendly color palettes from any image. Built with React, Tailwind, and ColorThief for high visual accuracy and smooth UX.
+
+🔗 Live App: https://palettrix7.vercel.app/
 
 > Upload or drag an image and instantly generate a curated palette you can actually trust.
 
