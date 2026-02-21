@@ -211,14 +211,29 @@ export default function ColorPaletteExtractor() {
 
       <div className="relative z-10 max-w-6xl mx-auto space-y-10">
         {/* header */}
-        <div className="text-center space-y-3">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
-            Extract Colors from Any Image
-          </h1>
-          <p className="text-white/60 text-sm">
-            Upload or drag an image to generate a clean color palette instantly.
-          </p>
+        <div className="text-center space-y-4">
+        {/* Logo + Brand */}
+        <div className="flex flex-col items-center gap-2">
+          <img
+            src="src\assets\color-circle.png"
+            alt="Palettrix logo"
+            className="h-14 w-14 md:h-16 md:w-16"
+          />
+          <span className="text-lg md:text-xl font-semibold tracking-tight">
+            Palettrix
+          </span>
         </div>
+
+        {/* Headline */}
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+          Generate Color Palettes Designers Actually Trust
+        </h1>
+
+        {/* Subtext */}
+        <p className="text-white/60 text-sm md:text-base max-w-xl mx-auto">
+          Upload or drag an image to instantly extract clean, perceptually-ranked colors.
+        </p>
+      </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* LEFT */}
