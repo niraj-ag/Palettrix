@@ -10,7 +10,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const colorThief = new ColorThief();
 
 export default function ColorPaletteExtractor() {
-  
+
+  const imageRef = useRef(null);
   const [hasUserAdjusted, setHasUserAdjusted] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
   const [colors, setColors] = useState([]);
@@ -41,9 +42,6 @@ export default function ColorPaletteExtractor() {
   // ---------- EXTRACTION ----------
   const extractColors = useCallback((img, count) => {
   setIsLoading(true);
-    if (!hasUserAdjusted) {
-  setNumColors(getSmartColorCount(colors));
-}
   const run = () => {
     try {
       // STEP 1 — always oversample to fixed size
@@ -90,17 +88,19 @@ export default function ColorPaletteExtractor() {
       img.crossOrigin = "anonymous";
       img.src = url;
       img.onload = () => {
-  const RAW_SIZE = 24;
-  const palette = colorThief.getPalette(img, RAW_SIZE);
-  const hexColors = palette.map(([r, g, b]) =>
-    rgbToHex(r, g, b)
-  );
+      imageRef.current = img; // ⭐ cache once
 
-  const smartCount = getSmartColorCount(hexColors);
-  setNumColors(smartCount);
+      const RAW_SIZE = 24;
+      const palette = colorThief.getPalette(img, RAW_SIZE);
+      const hexColors = palette.map(([r, g, b]) =>
+        rgbToHex(r, g, b)
+      );
 
-  extractColors(img, smartCount); // ⚠️ use smartCount, NOT numColors
-};
+      const smartCount = getSmartColorCount(hexColors);
+      setNumColors(smartCount);
+
+      extractColors(img, smartCount);
+    };
     },
     [extractColors]
   );
@@ -140,19 +140,16 @@ export default function ColorPaletteExtractor() {
 
   // ---------- SLIDER DEBOUNCE ----------
   useEffect(() => {
-    if (!imageSrc) return;
+  if (!imageRef.current) return;
 
-    clearTimeout(extractTimeout.current);
+  clearTimeout(extractTimeout.current);
 
-    extractTimeout.current = setTimeout(() => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = imageSrc;
-      img.onload = () => extractColors(img, numColors);
-    }, 220);
+  extractTimeout.current = setTimeout(() => {
+    extractColors(imageRef.current, numColors);
+  }, 220);
 
-    return () => clearTimeout(extractTimeout.current);
-  }, [numColors, imageSrc, extractColors]);
+  return () => clearTimeout(extractTimeout.current);
+}, [numColors, extractColors]);
 
   // ---------- HELPERS ----------
   const rgbToHex = (r, g, b) =>
