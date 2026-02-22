@@ -6,11 +6,12 @@ import clsx from "clsx";
 import ColorThief from "colorthief";
 import { Check, Upload } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-const [hasUserAdjusted, setHasUserAdjusted] = useState(false);
 
 const colorThief = new ColorThief();
 
 export default function ColorPaletteExtractor() {
+  
+  const [hasUserAdjusted, setHasUserAdjusted] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
   const [colors, setColors] = useState([]);
   const [numColors, setNumColors] = useState(6);
