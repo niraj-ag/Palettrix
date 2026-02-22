@@ -6,6 +6,7 @@ import clsx from "clsx";
 import ColorThief from "colorthief";
 import { Check, Upload } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+const [hasUserAdjusted, setHasUserAdjusted] = useState(false);
 
 const colorThief = new ColorThief();
 
@@ -39,7 +40,9 @@ export default function ColorPaletteExtractor() {
   // ---------- EXTRACTION ----------
   const extractColors = useCallback((img, count) => {
   setIsLoading(true);
-
+    if (!hasUserAdjusted) {
+  setNumColors(getSmartColorCount(colors));
+}
   const run = () => {
     try {
       // STEP 1 — always oversample to fixed size
@@ -57,9 +60,7 @@ export default function ColorPaletteExtractor() {
       // ⭐ smart default only on first load
       setBasePalette(hexColors);
 
-      setNumColors(prev =>
-        imageSrc ? prev : getSmartColorCount(hexColors)
-      );
+      
 
       const visible = buildVisiblePalette(hexColors, count);
       setColors(visible);
@@ -87,9 +88,20 @@ export default function ColorPaletteExtractor() {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.src = url;
-      img.onload = () => extractColors(img, numColors);
+      img.onload = () => {
+  const RAW_SIZE = 24;
+  const palette = colorThief.getPalette(img, RAW_SIZE);
+  const hexColors = palette.map(([r, g, b]) =>
+    rgbToHex(r, g, b)
+  );
+
+  const smartCount = getSmartColorCount(hexColors);
+  setNumColors(smartCount);
+
+  extractColors(img, smartCount); // ⚠️ use smartCount, NOT numColors
+};
     },
-    [numColors, extractColors]
+    [extractColors]
   );
 
   const handleImageUpload = (e) => {
@@ -440,7 +452,10 @@ const paletteGradient = colors.length
                   max={10}
                   step={1}
                   value={[numColors]}
-                  onValueChange={(v) => setNumColors(v[0])}
+                  onValueChange={(v) => {
+                    setHasUserAdjusted(true);
+                    setNumColors(v[0]);
+                  }}
                   onValueCommit={() => reExtract()}
                   className="w-full touch-none"
                 />
